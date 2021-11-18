@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 
 typedef struct {
@@ -18,6 +19,12 @@ layer_t create_layer(unsigned int size) {
     return layer;
 }
 
+void forward_layer(const layer_t *layer, double *values, unsigned int n) {
+    if (layer->size != n) {
+        fprintf(stderr, "Input size %d does not match layer size %d\n", n, layer->size);
+    }
+}
+
 void destroy_layer(const layer_t *layer) {
     free(layer->weights);
 }
@@ -29,6 +36,11 @@ network_t create_network(unsigned int input, unsigned int hidden, unsigned int o
     network.output = create_layer(output);
     return network;
 }
+
+void forward(const network_t *network, double *values, unsigned int n) {
+    forward_layer(&(network->input), values, n);
+}
+
 void destroy_network(const network_t *network) {
     destroy_layer(&(network->input));
     destroy_layer(&(network->hidden));
@@ -36,5 +48,9 @@ void destroy_network(const network_t *network) {
 }
 
 int main() {
+    network_t network = create_network(100, 25, 4);
+    double image[100];
+    forward(&network, image, 100);
+    destroy_network(&network);
     return 0;
 }
