@@ -22,6 +22,13 @@ array_t create_array(size_t size) {
     return array;
 }
 
+void array_copy(array_t to, array_t from) {    
+    // TODO: assert to.size <= from.size
+    for (size_t i = 0; i < to.size; i++) {
+        to.values[i] = from.values[i];
+    }
+}
+
 void print_array(array_t array) {
     printf("[");
     if (array.size > 0) {
@@ -167,32 +174,62 @@ void one_hot(array_t array, int n) {
     array.values[n] = 1.0;
 }
 
-int main() {
-    network_t network = create_network(2, 1, 2);
-    array_t input = create_array(2);
-    array_t output = create_array(2);
+typedef struct {
+    size_t size;
+    size_t allocated;
+    array_t *rows;
+} dataset_t;
 
+dataset_t load_dataset(FILE* file, size_t columns) {
+    dataset_t dataset;
+    dataset.size = 0;
+    dataset.allocated = 0;
+    dataset.rows = malloc(0);
+
+    size_t i = 0;
     char *line = NULL;
     size_t size;
-    while (getline(&line, &size, stdin) != -1) {
-        size_t i = 0;
-
-        for (char *tok = strtok(line, ","); tok && *tok; tok = strtok(NULL, ",")) {
-            if (i < input.size) {
-                input.values[i] = strtod(tok, NULL);
-            }
-            if (i == 2) {
-                one_hot(output, atoi(tok));
-            }
-            i++;
+    while (getline(&line, &size, file) != -1) {
+        if (i >= dataset.allocated) {
+            dataset.allocated += 20;
+            dataset.rows = realloc(dataset.rows, sizeof(array_t) * dataset.allocated);
         }
 
-        backpropagate(&network, input, output, 0.1);
+        size_t j = 0;
+        dataset.rows[i] = create_array(columns);
+        for (char *tok = strtok(line, ","); tok && *tok; tok = strtok(NULL, ",")) {
+            dataset.rows[i].values[j] = strtod(tok, NULL);
+            j++;
+        }
+        i++;
+    }
+    dataset.size = i;
+    return dataset;
+}
+
+void destroy_dataset(const dataset_t *dataset) {
+    for (size_t i = 0; i < dataset->size; i++) {
+        destroy_array(&(dataset->rows[i]));
+    }
+    free(dataset->rows);
+}
+
+int main() {
+    network_t network = create_network(2, 1, 2);
+    dataset_t toy = load_dataset(stdin, 4);
+
+    const double learning_rate = 0.1;
+    array_t input = create_array(2);
+    array_t expected = create_array(2);
+    for (size_t epoch = 0; epoch < 10; epoch++) {
+        for (size_t i = 0; i < toy.size; i++) {
+            array_copy(input, toy.rows[i]);
+            one_hot(expected, (int)toy.rows[i].values[2]);
+            backpropagate(&network, input, expected, learning_rate);
+        }
     }
 
-    destroy_array(&input);
-    destroy_array(&output);
-
+    destroy_dataset(&toy);
     destroy_network(&network);
     return 0;
 }
