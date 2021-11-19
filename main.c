@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 double sigmoid(double x) {
 	return 1.0 / (1.0 + exp(-x));
@@ -27,6 +28,7 @@ typedef struct {
     size_t input_size;
     size_t output_size;
     double **weights;
+    double bias;
 } layer_t;
 
 typedef struct {
@@ -38,12 +40,26 @@ layer_t create_layer(size_t input_size, size_t output_size) {
     layer_t layer;
     layer.input_size = input_size;
     layer.output_size = output_size;
-    layer.weights = calloc(sizeof(double*), input_size);
+    layer.weights = calloc(sizeof(double*), output_size);
     
-    for (size_t i = 0; i < input_size; i++) {
-        layer.weights[i] = calloc(sizeof(double), output_size);
+    for (size_t i = 0; i < output_size; i++) {
+        layer.weights[i] = calloc(sizeof(double), input_size);
     }
     return layer;
+}
+
+double activation(layer_t *layer, array_t input, size_t n) {
+    // TODO: assert n is smaller than layer.outpåutsize
+    if (layer->input_size != input.size) {
+        fprintf(stderr, "Input size %ld does not match layer size %ld\n", input.size, layer->input_size);
+    }
+
+	double a = layer->bias;
+    double *weights = layer->weights[n];
+    for (size_t i = 0; i < layer->input_size; i++) {
+        a += weights[i] * input.values[i];
+    }
+	return a;
 }
 
 void forward_layer_to(const layer_t *layer, array_t input, array_t output) {
@@ -56,7 +72,7 @@ void forward_layer_to(const layer_t *layer, array_t input, array_t output) {
 }
 
 void destroy_layer(const layer_t *layer) {
-    for (size_t i = 0; i < layer->input_size; i++) {
+    for (size_t i = 0; i < layer->output_size; i++) {
         free(layer->weights[i]);
     }
     free(layer->weights);
