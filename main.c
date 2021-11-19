@@ -108,6 +108,34 @@ void forward_to(const network_t *network, array_t input, array_t output) {
     destroy_array(&tmp);
 }
 
+void backpropagate(network_t *network, array_t input, array_t expected, double learning_rate) {
+    // forward each layer and remember outputs
+    array_t hidden_output = create_array(network->hidden.output_size);
+    array_t output = create_array(network->output.output_size);
+    forward_layer_to(&(network->hidden), input, hidden_output);
+    forward_layer_to(&(network->output), hidden_output, output);
+
+    // calculate deltas for output layer
+    double output_deltas[network->output.output_size];
+    for (size_t i = 0; i < network->output.output_size; i++) {
+        const double error = output.values[i] - expected.values[i];
+        output_deltas[i] = error * sigmoid_derivative(output.values[i]);
+    }
+
+    // calculate deltas for hidden layer
+    double hidden_deltas[network->hidden.output_size];
+    for (size_t i = 0; i < network->hidden.output_size; i++) {
+        double error = 0.0;
+        for (size_t j = 0; j < network->output.output_size; j++) {
+            error += network->output.weights[j][i] * output_deltas[j];
+        }
+        hidden_deltas[i] = error - sigmoid_derivative(hidden_output.values[i]);
+    }
+
+    destroy_array(&hidden_output);
+    destroy_array(&output);
+}
+
 void destroy_network(const network_t *network) {
     destroy_layer(&(network->hidden));
     destroy_layer(&(network->output));
@@ -119,7 +147,7 @@ int main() {
     array_t output = create_array(2);
     
     print_array(input);
-    forward_to(&network, input, output);
+    backpropagate(&network, input, output, 0.1);
     print_array(output);
     
     destroy_array(&input);
