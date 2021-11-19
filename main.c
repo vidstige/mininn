@@ -20,6 +20,18 @@ array_t create_array(size_t size) {
     array.values = calloc(sizeof(double), size);
     return array;
 }
+
+void print_array(array_t array) {
+    printf("[");
+    if (array.size > 0) {
+        printf("%f", array.values[0]);
+    }
+    for (size_t i = 1; i < array.size; i++) {
+        printf(", %f", array.values[i]);
+    }
+    printf("]\n");
+}
+
 void destroy_array(const array_t *array) {
     free(array->values);
 }
@@ -106,7 +118,9 @@ int main() {
     array_t input = create_array(2);
     array_t output = create_array(2);
     
+    print_array(input);
     forward_to(&network, input, output);
+    print_array(output);
     
     destroy_array(&input);
     destroy_array(&output);
