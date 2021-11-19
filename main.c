@@ -40,7 +40,7 @@ typedef struct {
     size_t input_size;
     size_t output_size;
     double **weights;
-    double bias;
+    double *bias;
 } layer_t;
 
 typedef struct {
@@ -53,6 +53,7 @@ layer_t create_layer(size_t input_size, size_t output_size) {
     layer.input_size = input_size;
     layer.output_size = output_size;
     layer.weights = calloc(sizeof(double*), output_size);
+    layer.bias = calloc(sizeof(double), output_size);
     
     for (size_t i = 0; i < output_size; i++) {
         layer.weights[i] = calloc(sizeof(double), input_size);
@@ -67,7 +68,7 @@ double activation(const layer_t *layer, array_t input, size_t n) {
     }
 
     double *weights = layer->weights[n];
-	double a = layer->bias;
+	double a = layer->bias[n];
     for (size_t i = 0; i < layer->input_size; i++) {
         a += weights[i] * input.values[i];
     }
@@ -92,6 +93,7 @@ void destroy_layer(const layer_t *layer) {
         free(layer->weights[i]);
     }
     free(layer->weights);
+    free(layer->bias);
 }
 
 network_t create_network(size_t input, size_t hidden, size_t output) {
@@ -137,7 +139,7 @@ void backpropagate(network_t *network, array_t input, array_t expected, double l
         for (size_t j = 0; j < network->hidden.input_size; j++) {
             network->hidden.weights[i][j] -= learning_rate * hidden_deltas[i] * input.values[i];
         }
-        // TOOD: Update bias
+        network->hidden.bias[i] -= learning_rate * hidden_deltas[i];
     }
 
     // Update weight in the output layer
@@ -145,7 +147,7 @@ void backpropagate(network_t *network, array_t input, array_t expected, double l
         for (size_t j = 0; j < network->output.input_size; j++) {
             network->output.weights[i][j] -= learning_rate * output_deltas[i] * hidden_output.values[i];
         }
-        // TODO: Update bias
+        network->output.bias[i] -= learning_rate * output_deltas[i];
     }	
 
     destroy_array(&hidden_output);
