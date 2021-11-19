@@ -132,6 +132,22 @@ void backpropagate(network_t *network, array_t input, array_t expected, double l
         hidden_deltas[i] = error - sigmoid_derivative(hidden_output.values[i]);
     }
 
+    // Update weights in the hidden layer
+    for (size_t i = 0; i < network->hidden.output_size; i++) {
+        for (size_t j = 0; j < network->hidden.input_size; j++) {
+            network->hidden.weights[i][j] -= learning_rate * hidden_deltas[i] * input.values[i];
+        }
+        // TOOD: Update bias
+    }
+
+    // Update weight in the output layer
+    for (size_t i = 0; i < network->output.output_size; i++) {
+        for (size_t j = 0; j < network->output.input_size; j++) {
+            network->output.weights[i][j] -= learning_rate * output_deltas[i] * hidden_output.values[i];
+        }
+        // TODO: Update bias
+    }	
+
     destroy_array(&hidden_output);
     destroy_array(&output);
 }
