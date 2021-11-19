@@ -48,14 +48,14 @@ layer_t create_layer(size_t input_size, size_t output_size) {
     return layer;
 }
 
-double activation(layer_t *layer, array_t input, size_t n) {
+double activation(const layer_t *layer, array_t input, size_t n) {
     // TODO: assert n is smaller than layer.outpåutsize
     if (layer->input_size != input.size) {
         fprintf(stderr, "Input size %ld does not match layer size %ld\n", input.size, layer->input_size);
     }
 
-	double a = layer->bias;
     double *weights = layer->weights[n];
+	double a = layer->bias;
     for (size_t i = 0; i < layer->input_size; i++) {
         a += weights[i] * input.values[i];
     }
@@ -68,6 +68,10 @@ void forward_layer_to(const layer_t *layer, array_t input, array_t output) {
     }
     if (layer->output_size != output.size) {
         fprintf(stderr, "Output size %ld does not match layer size %ld\n", output.size, layer->output_size);
+    }
+
+    for (size_t i = 0; i < layer->output_size; i++) {
+        output.values[i] = sigmoid(activation(layer, input, i));
     }
 }
 
