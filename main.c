@@ -110,6 +110,16 @@ void forward_to(const network_t *network, array_t input, array_t output) {
     destroy_array(&tmp);
 }
 
+void update_weights(layer_t *layer, array_t input, double *deltas, double learning_rate) {
+    // TODO: Assert layer output size == deltas & input size
+    for (size_t i = 0; i < layer->output_size; i++) {
+        for (size_t j = 0; j < layer->input_size; j++) {
+            layer->weights[i][j] -= learning_rate * deltas[i] * input.values[i];
+        }
+        layer->bias[i] -= learning_rate * deltas[i];
+    }
+}
+
 void backpropagate(network_t *network, array_t input, array_t expected, double learning_rate) {
     // forward each layer and remember outputs
     array_t hidden_output = create_array(network->hidden.output_size);
@@ -135,20 +145,10 @@ void backpropagate(network_t *network, array_t input, array_t expected, double l
     }
 
     // Update weights in the hidden layer
-    for (size_t i = 0; i < network->hidden.output_size; i++) {
-        for (size_t j = 0; j < network->hidden.input_size; j++) {
-            network->hidden.weights[i][j] -= learning_rate * hidden_deltas[i] * input.values[i];
-        }
-        network->hidden.bias[i] -= learning_rate * hidden_deltas[i];
-    }
+    update_weights(&(network->hidden), input, hidden_deltas, learning_rate);
 
-    // Update weight in the output layer
-    for (size_t i = 0; i < network->output.output_size; i++) {
-        for (size_t j = 0; j < network->output.input_size; j++) {
-            network->output.weights[i][j] -= learning_rate * output_deltas[i] * hidden_output.values[i];
-        }
-        network->output.bias[i] -= learning_rate * output_deltas[i];
-    }	
+    // Update weight in the output layer. Input = hidden_output
+    update_weights(&(network->output), hidden_output, output_deltas, learning_rate);
 
     destroy_array(&hidden_output);
     destroy_array(&output);
