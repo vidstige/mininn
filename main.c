@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h> // for strtok
 
 double sigmoid(double x) {
 	return 1.0 / (1.0 + exp(-x));
@@ -170,14 +171,28 @@ int main() {
     network_t network = create_network(2, 1, 2);
     array_t input = create_array(2);
     array_t output = create_array(2);
-    one_hot(output, 0);
 
-    print_array(input);
-    backpropagate(&network, input, output, 0.1);
-    print_array(output);
-    
+    char *line = NULL;
+    size_t size;
+    while (getline(&line, &size, stdin) != -1) {
+        size_t i = 0;
+
+        for (char *tok = strtok(line, ","); tok && *tok; tok = strtok(NULL, ",")) {
+            if (i < input.size) {
+                input.values[i] = strtod(tok, NULL);
+            }
+            if (i == 2) {
+                one_hot(output, atoi(tok));
+            }
+            i++;
+        }
+
+        backpropagate(&network, input, output, 0.1);
+    }
+
     destroy_array(&input);
     destroy_array(&output);
+
     destroy_network(&network);
     return 0;
 }
