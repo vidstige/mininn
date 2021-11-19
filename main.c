@@ -43,6 +43,9 @@ void forward_layer_to(const layer_t *layer, array_t input, array_t output) {
     if (layer->input_size != input.size) {
         fprintf(stderr, "Input size %ld does not match layer size %ld\n", input.size, layer->input_size);
     }
+    if (layer->output_size != output.size) {
+        fprintf(stderr, "Output size %ld does not match layer size %ld\n", output.size, layer->output_size);
+    }
 }
 
 void destroy_layer(const layer_t *layer) {
@@ -60,7 +63,10 @@ network_t create_network(size_t input, size_t hidden, size_t output) {
 }
 
 void forward_to(const network_t *network, array_t input, array_t output) {
-    forward_layer_to(&(network->hidden), input, output);
+    array_t tmp = create_array(network->hidden.output_size);
+    forward_layer_to(&(network->hidden), input, tmp);
+    forward_layer_to(&(network->output), tmp, output);
+    destroy_array(&tmp);
 }
 
 void destroy_network(const network_t *network) {
