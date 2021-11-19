@@ -3,10 +3,10 @@
 
 typedef struct {
     double *values;
-    unsigned int size;    
+    size_t size;    
 } array_t;
 
-array_t create_array(unsigned int size) {
+array_t create_array(size_t size) {
     array_t array;
     array.size = size;
     array.values = calloc(sizeof(double), size);
@@ -17,24 +17,23 @@ void destroy_array(const array_t *array) {
 }
 
 typedef struct {
-    unsigned int input_size;
-    unsigned int output_size;
+    size_t input_size;
+    size_t output_size;
     double **weights;
 } layer_t;
 
 typedef struct {
-    layer_t input;
     layer_t hidden;
     layer_t output;    
 } network_t;
 
-layer_t create_layer(unsigned int input_size, unsigned int output_size) {
+layer_t create_layer(size_t input_size, size_t output_size) {
     layer_t layer;
     layer.input_size = input_size;
+    layer.output_size = output_size;
     layer.weights = calloc(sizeof(double*), input_size);
     
-    layer.output_size = output_size;
-    for (unsigned int i = 0; i < input_size; i++) {
+    for (size_t i = 0; i < input_size; i++) {
         layer.weights[i] = calloc(sizeof(double), output_size);
     }
     return layer;
@@ -42,18 +41,18 @@ layer_t create_layer(unsigned int input_size, unsigned int output_size) {
 
 void forward_layer_to(const layer_t *layer, array_t input, array_t output) {
     if (layer->input_size != input.size) {
-        fprintf(stderr, "Input size %d does not match layer size %d\n", input.size, layer->input_size);
+        fprintf(stderr, "Input size %ld does not match layer size %ld\n", input.size, layer->input_size);
     }
 }
 
 void destroy_layer(const layer_t *layer) {
-    for (unsigned int i = 0; i < layer->input_size; i++) {
+    for (size_t i = 0; i < layer->input_size; i++) {
         free(layer->weights[i]);
     }
     free(layer->weights);
 }
 
-network_t create_network(unsigned int input, unsigned int hidden, unsigned int output) {
+network_t create_network(size_t input, size_t hidden, size_t output) {
     network_t network;
     network.hidden = create_layer(input, hidden);
     network.output = create_layer(hidden, output);
@@ -61,7 +60,7 @@ network_t create_network(unsigned int input, unsigned int hidden, unsigned int o
 }
 
 void forward_to(const network_t *network, array_t input, array_t output) {
-    forward_layer_to(&(network->input), input, output);
+    forward_layer_to(&(network->hidden), input, output);
 }
 
 void destroy_network(const network_t *network) {
