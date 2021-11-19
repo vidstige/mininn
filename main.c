@@ -159,11 +159,19 @@ void destroy_network(const network_t *network) {
     destroy_layer(&(network->output));
 }
 
+void one_hot(array_t array, int n) {
+    for (size_t i = 0; i < array.size; i++) {
+        array.values[i] = 0.0;
+    }
+    array.values[n] = 1.0;
+}
+
 int main() {
     network_t network = create_network(2, 1, 2);
     array_t input = create_array(2);
     array_t output = create_array(2);
-    
+    one_hot(output, 0);
+
     print_array(input);
     backpropagate(&network, input, output, 0.1);
     print_array(output);
