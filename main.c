@@ -3,6 +3,7 @@
 #include <math.h>
 #include <string.h> // for strtok
 
+#define ASSERT 
 double sigmoid(double x) {
 	return 1.0 / (1.0 + exp(-x));
 }
@@ -20,6 +21,10 @@ array_t create_array(size_t size) {
     array.size = size;
     array.values = calloc(sizeof(double), size);
     return array;
+}
+
+array_t create_array_like(array_t like) {
+    return create_array(like.size);
 }
 
 void array_copy(array_t to, array_t from) {    
@@ -214,6 +219,18 @@ void destroy_dataset(const dataset_t *dataset) {
     free(dataset->rows);
 }
 
+// computes squared error
+double error2_for(const network_t *network, array_t input, array_t expected) {
+    array_t output = create_array_like(expected);
+    forward_to(network, input, output);
+    double sum = 0.0;
+    for (size_t i = 0; i < output.size; i++) {
+        sum += (output.values[i] - expected.values[i]) * (output.values[i] - expected.values[i]);
+    }
+    destroy_array(&output);
+    return sum;
+}
+
 int main() {
     network_t network = create_network(2, 1, 2);
     dataset_t toy = load_dataset(stdin, 4);
@@ -221,13 +238,19 @@ int main() {
     const double learning_rate = 0.1;
     array_t input = create_array(2);
     array_t expected = create_array(2);
-    for (size_t epoch = 0; epoch < 10; epoch++) {
+    for (size_t epoch = 0; epoch < 1000; epoch++) {
+        double error2 = error2_for(&network, input, expected);
         for (size_t i = 0; i < toy.size; i++) {
             array_copy(input, toy.rows[i]);
             one_hot(expected, (int)toy.rows[i].values[2]);
             backpropagate(&network, input, expected, learning_rate);
+
+            error2 += error2_for(&network, input, expected);
         }
+        printf("> epoch=%d. error2=%f\n", epoch, error2);
     }
+    destroy_array(&input);
+    destroy_array(&expected);
 
     destroy_dataset(&toy);
     destroy_network(&network);
