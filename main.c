@@ -128,7 +128,7 @@ void update_weights(layer_t *layer, array_t input, double *deltas, double learni
     // TODO: deltas.size == layer->output_size
     for (size_t i = 0; i < layer->output_size; i++) {
         for (size_t j = 0; j < layer->input_size; j++) {
-            layer->weights[i][j] -= learning_rate * deltas[i] * input.values[i];
+            layer->weights[i][j] -= learning_rate * deltas[i] * input.values[j];
         }
         layer->bias[i] -= learning_rate * deltas[i];
     }
