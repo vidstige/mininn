@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -81,10 +82,8 @@ layer_t create_layer(size_t input_size, size_t output_size) {
 }
 
 double activation(const layer_t *layer, array_t input, size_t n) {
-    // TODO: assert n is smaller than layer.outpåutsize
-    if (layer->input_size != input.size) {
-        fprintf(stderr, "Input size %ld does not match layer size %ld\n", input.size, layer->input_size);
-    }
+    assert(n < layer->output_size);
+    assert(layer->input_size == input.size);
 
     double *weights = layer->weights[n];
 	double a = layer->bias[n];
@@ -95,13 +94,8 @@ double activation(const layer_t *layer, array_t input, size_t n) {
 }
 
 void forward_layer_to(const layer_t *layer, array_t input, array_t output) {
-    if (layer->input_size != input.size) {
-        fprintf(stderr, "Input size %ld does not match layer size %ld\n", input.size, layer->input_size);
-    }
-    if (layer->output_size != output.size) {
-        fprintf(stderr, "Output size %ld does not match layer size %ld\n", output.size, layer->output_size);
-    }
-
+    assert(layer->input_size == input.size);
+    assert(layer->output_size == output.size);
     for (size_t i = 0; i < layer->output_size; i++) {
         output.values[i] = sigmoid(activation(layer, input, i));
     }
@@ -130,7 +124,8 @@ void forward_to(const network_t *network, array_t input, array_t output) {
 }
 
 void update_weights(layer_t *layer, array_t input, double *deltas, double learning_rate) {
-    // TODO: Assert layer output size == deltas & input size
+    assert(layer->input_size == input.size);
+    // TODO: deltas.size == layer->output_size
     for (size_t i = 0; i < layer->output_size; i++) {
         for (size_t j = 0; j < layer->input_size; j++) {
             layer->weights[i][j] -= learning_rate * deltas[i] * input.values[i];
@@ -255,11 +250,11 @@ int main() {
     initialize_network(&network);
 
     dataset_t toy = load_dataset(stdin, 4);
-
-    const double learning_rate = 0.01;
+    
+    const double learning_rate = 0.5;
     array_t input = create_array(2);
     array_t expected = create_array(2);
-    for (size_t epoch = 0; epoch < 100; epoch++) {
+    for (size_t epoch = 0; epoch < 40; epoch++) {
         double error2 = error2_for(&network, input, expected);
         for (size_t i = 0; i < toy.size; i++) {
             array_copy(input, toy.rows[i]);
@@ -268,7 +263,7 @@ int main() {
 
             error2 += error2_for(&network, input, expected);
         }
-        printf("> epoch=%d. error2=%f\n", epoch, error2);
+        printf("> epoch=%ld. error2=%f\n", epoch, error2);
     }
     destroy_array(&input);
     destroy_array(&expected);
