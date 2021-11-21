@@ -3,7 +3,13 @@
 #include <math.h>
 #include <string.h> // for strtok
 
-#define ASSERT 
+double randfrom(double min, double max) 
+{
+    double range = (max - min); 
+    double div = RAND_MAX / range;
+    return min + (rand() / div);
+}
+
 double sigmoid(double x) {
 	return 1.0 / (1.0 + exp(-x));
 }
@@ -154,7 +160,7 @@ void backpropagate(network_t *network, array_t input, array_t expected, double l
         for (size_t j = 0; j < network->output.output_size; j++) {
             error += network->output.weights[j][i] * output_deltas[j];
         }
-        hidden_deltas[i] = error - sigmoid_derivative(hidden_output.values[i]);
+        hidden_deltas[i] = error * sigmoid_derivative(hidden_output.values[i]);
     }
 
     // Update weights in the hidden layer
@@ -231,14 +237,29 @@ double error2_for(const network_t *network, array_t input, array_t expected) {
     return sum;
 }
 
+void initialize_layer(layer_t *layer) {
+    for (size_t i = 0; i < layer->output_size; i++) {
+        for (size_t j = 0; j < layer->input_size; j++) {
+            layer->weights[i][j] = randfrom(0.0, 1.0);
+        }
+    }
+}
+
+void initialize_network(network_t *network) {
+    initialize_layer(&(network->hidden));
+    initialize_layer(&(network->output));
+}
+
 int main() {
     network_t network = create_network(2, 1, 2);
+    initialize_network(&network);
+
     dataset_t toy = load_dataset(stdin, 4);
 
-    const double learning_rate = 0.1;
+    const double learning_rate = 0.01;
     array_t input = create_array(2);
     array_t expected = create_array(2);
-    for (size_t epoch = 0; epoch < 1000; epoch++) {
+    for (size_t epoch = 0; epoch < 100; epoch++) {
         double error2 = error2_for(&network, input, expected);
         for (size_t i = 0; i < toy.size; i++) {
             array_copy(input, toy.rows[i]);
