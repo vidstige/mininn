@@ -8,7 +8,7 @@ scnn: $(OBJECTS)
 	$(CC) $^ -o $@ -lm
 
 $(OBJ)/%.o: $(SRC)/%.c
-	$(CC) -I$(SRC) -c $< -o $@
+	$(CC) -Wall -I$(SRC) -c $< -o $@
 
 clean:
 	rm $(OBJECTS) scnn
